@@ -89,14 +89,19 @@ def load_credentials():
             "sign in with your Claude account, then run this again. If macOS asked to allow "
             "Keychain access and you clicked Deny, run it again and click Always Allow.")
     try:
-        oauth = json.loads(blob).get("claudeAiOauth") or {}
+        data = json.loads(blob)
+        oauth = data.get("claudeAiOauth") or {}
     except (ValueError, AttributeError):
         raise SourceError(f"The Claude Code sign-in stored in {where} couldn't be read.")
     token = oauth.get("accessToken")
     if not token:
+        found = ", ".join(sorted(k for k in data if isinstance(k, str))) or "nothing"
         raise SourceError(
-            "Claude Code is signed in with an API key or console account, not a Claude plan "
-            "(Pro/Max/Team). Plan limits are only available for Claude account sign-ins.")
+            f"Claude Code's saved sign-in in {where} has no Claude account login (it contains: "
+            f"{found}). This happens when the terminal version of Claude Code was never signed in "
+            "with /login, or was signed in with an API key. The Claude desktop app keeps its own "
+            "sign-in, which this script can't use. Fix: open Terminal, run `claude`, type /login, "
+            "choose your Claude account, then run this again.")
     expires = parse_time(oauth.get("expiresAt"))
     info = {
         "where": where,
